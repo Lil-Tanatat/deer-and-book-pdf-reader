@@ -6,6 +6,7 @@ import {
   Dimensions,
   Button,
   Modal,
+  Linking,
 } from "react-native";
 import Pdf from "react-native-pdf";
 import * as ScreenCapture from "expo-screen-capture";
@@ -13,66 +14,84 @@ import * as ScreenCapture from "expo-screen-capture";
 const PdfRead = () => {
   const [isHorizontal, setIsHorizontal] = useState(true);
   const [isPagingEnabled, setIsPagingEnabled] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSwitchingView, setIsSwitchingView] = useState(false);
+  const [pdfUri, setPdfUri] = useState("");
 
-  // Disable screen capture when the component mounts
   useEffect(() => {
-    // Prevent screenshots and screen recordings
     ScreenCapture.preventScreenCaptureAsync();
 
-    // Optionally, you can release the prevention when the component unmounts
-    // return () => {
-    //   ScreenCapture.releaseScreenCaptureAsync(); // Reset capture settings on unmount
-    // };
+    const handleDeepLink = (event) => {
+      console.log("Deep link event received:", event);
+
+      if (!event?.url) {
+        console.warn("No URL received in deep link event");
+        return;
+      }
+
+      try {
+        const decodedUrl = decodeURIComponent(event.url);
+        console.log("Decoded URL:", decodedUrl);
+
+        const parsedUrl = new URL(decodedUrl);
+        console.log("Parsed URL object:", parsedUrl);
+
+        const slug = parsedUrl.searchParams.get("slug");
+        console.log("Extracted Slug:", slug);
+
+        if (slug) {
+          const uri = `https://deerandbook.com/protected/storage/app/book/pdf/${slug}`;
+          console.log("Setting PDF URI:", uri);
+          setPdfUri(uri);
+        } else {
+          console.warn("No slug found in URL.");
+        }
+      } catch (error) {
+        console.error("Error parsing URL:", error);
+      }
+    };
+
+    // Listen for deep link events
+    const linkingEventListener = Linking.addEventListener(
+      "url",
+      handleDeepLink
+    );
+
+    // Check if the app was opened with a deep link initially
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        console.log("Initial URL detected:", url);
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      linkingEventListener.remove();
+    };
   }, []);
-
-  const PdfResource = {
-    uri: "https://deerandbook.com/protected/storage/app/book/pdf/USA WEST.pdf",
-    cache: true,
-  };
-
-  const handleSwitchView = () => {
-    setIsSwitchingView(true);
-    setIsHorizontal(!isHorizontal);
-    setIsPagingEnabled(!isPagingEnabled);
-    setTimeout(() => {
-      setIsSwitchingView(false);
-    }, 10000);
-  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Deer and Book Reader</Text>
-      {/* {isLoading && <Text style={styles.loadingText}>Loading PDF...</Text>} */}
-      <Button title="Switch View" onPress={handleSwitchView} />
-      <Pdf
-        trustAllCerts={false}
-        source={PdfResource}
-        style={styles.pdf}
-        horizontal={isHorizontal}
-        enablePaging={isPagingEnabled}
-        onLoadComplete={(numberOfPages, filePath) => {
-          console.log(`number of pages: ${numberOfPages}`);
-          setIsLoading(false);
-        }}
-        onError={(error) => {
-          console.log(error);
-          setIsLoading(false);
-        }}
-      />
-      <Modal
-        transparent={true}
-        animationType="fade"
-        visible={isSwitchingView}
-        onRequestClose={() => {}}
-      >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContent}>
-            <Text>Switching view...</Text>
-          </View>
-        </View>
-      </Modal>
+      <Text style={styles.debugText}>
+        Current PDF URI: {pdfUri || "Not Set"}
+      </Text>
+      {pdfUri ? (
+        <Pdf
+          trustAllCerts={false}
+          source={{ uri: pdfUri, cache: true }}
+          style={styles.pdf}
+          horizontal={isHorizontal}
+          enablePaging={isPagingEnabled}
+          onLoadComplete={(numberOfPages) => {
+            console.log(`PDF Loaded - Number of pages: ${numberOfPages}`);
+          }}
+          onError={(error) => {
+            console.error("PDF Load Error:", error);
+          }}
+        />
+      ) : (
+        <Text style={styles.loadingText}>Waiting for PDF URL...</Text>
+      )}
     </View>
   );
 };
@@ -82,11 +101,18 @@ export default PdfRead;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 20,
   },
   title: {
     fontSize: 20,
     textAlign: "center",
-    fontWeight: "bold", // Corrected "fontweight" to "fontWeight"
+    fontWeight: "bold",
+  },
+  debugText: {
+    fontSize: 14,
+    textAlign: "center",
+    color: "gray",
+    marginBottom: 10,
   },
   pdf: {
     flex: 1,
@@ -96,16 +122,5 @@ const styles = StyleSheet.create({
   loadingText: {
     textAlign: "center",
     margin: 10,
-  },
-  modalBackground: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
   },
 });
