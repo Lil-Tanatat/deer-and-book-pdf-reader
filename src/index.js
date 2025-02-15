@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -10,12 +10,22 @@ import {
 } from "react-native";
 import Pdf from "react-native-pdf";
 import * as ScreenCapture from "expo-screen-capture";
+import { usePreventScreenCapture } from "expo-screen-capture";
 
 const PdfRead = () => {
+  usePreventScreenCapture();
   const [isHorizontal, setIsHorizontal] = useState(true);
   const [isPagingEnabled, setIsPagingEnabled] = useState(true);
   const [isSwitchingView, setIsSwitchingView] = useState(false);
   const [pdfUri, setPdfUri] = useState("");
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [slug, setSlug] = useState("");
+  const pdfUriRef = useRef("");
+
+  const handleSwitchView = () => {
+    setIsHorizontal(!isHorizontal);
+    setIsPagingEnabled(!isPagingEnabled);
+  };
 
   useEffect(() => {
     ScreenCapture.preventScreenCaptureAsync();
@@ -39,9 +49,15 @@ const PdfRead = () => {
         console.log("Extracted Slug:", slug);
 
         if (slug) {
+          setSlug(slug);
           const uri = `https://deerandbook.com/protected/storage/app/book/pdf/${slug}`;
           console.log("Setting PDF URI:", uri);
-          setPdfUri(uri);
+          if (pdfUriRef.current !== uri) {
+            pdfUriRef.current = uri;
+            setTimeout(() => {
+              setPdfUri(uri);
+            }, 10000);
+          }
         } else {
           console.warn("No slug found in URL.");
         }
@@ -64,8 +80,25 @@ const PdfRead = () => {
       }
     });
 
+    const interval = setInterval(() => {
+      setLoadingProgress((prevProgress) => {
+        if (prevProgress >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prevProgress + 1;
+      });
+    }, 100);
+
     return () => {
+      clearInterval(interval);
       linkingEventListener.remove();
+      setIsHorizontal(true);
+      setIsPagingEnabled(true);
+      setIsSwitchingView(false);
+      setPdfUri("");
+      setLoadingProgress(0);
+      setSlug("");
     };
   }, []);
 
@@ -75,6 +108,10 @@ const PdfRead = () => {
       <Text style={styles.debugText}>
         Current PDF URI: {pdfUri || "Not Set"}
       </Text>
+      <Button
+        title={`Switch to ${isHorizontal ? "Vertical" : "Horizontal"} View`}
+        onPress={handleSwitchView}
+      />
       {pdfUri ? (
         <Pdf
           trustAllCerts={false}
@@ -87,10 +124,13 @@ const PdfRead = () => {
           }}
           onError={(error) => {
             console.error("PDF Load Error:", error);
+            alert("Failed to load PDF. Please check the URL and try again.");
           }}
         />
       ) : (
-        <Text style={styles.loadingText}>Waiting for PDF URL...</Text>
+        <Text style={styles.loadingText}>
+          Waiting for PDF URL... {loadingProgress}%
+        </Text>
       )}
     </View>
   );
