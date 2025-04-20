@@ -36,6 +36,10 @@ const App = () => {
   };
 
   const handleBuyBook = () => {
+    Linking.openURL("https://deerandbook.com").catch((err) => {
+      console.error("Error opening URL:", err);
+      alert("Failed to open the website. Please try again.");
+    });
     // This will be triggered when the user wants to buy a book
     // You can implement the logic to redirect to the store here
     console.log("Buy Book button pressed");
