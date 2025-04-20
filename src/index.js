@@ -5,26 +5,40 @@ import {
   StyleSheet,
   Dimensions,
   Button,
-  Modal,
   Linking,
+  BackHandler,
+  TouchableOpacity,
 } from "react-native";
 import Pdf from "react-native-pdf";
 import * as ScreenCapture from "expo-screen-capture";
 import { usePreventScreenCapture } from "expo-screen-capture";
+import PdfReader from "./components/PdfReader";
 
-const PdfRead = () => {
-  usePreventScreenCapture();
-  const [isHorizontal, setIsHorizontal] = useState(true);
-  const [isPagingEnabled, setIsPagingEnabled] = useState(true);
-  const [isSwitchingView, setIsSwitchingView] = useState(false);
+const App = () => {
   const [pdfUri, setPdfUri] = useState("");
-  const [loadingProgress, setLoadingProgress] = useState(0);
   const [slug, setSlug] = useState("");
   const pdfUriRef = useRef("");
 
-  const handleSwitchView = () => {
-    setIsHorizontal(!isHorizontal);
-    setIsPagingEnabled(!isPagingEnabled);
+  const handleBackButtonPress = () => {
+    if (pdfUri) {
+      setPdfUri("");
+    } else {
+      BackHandler.exitApp();
+    }
+  };
+
+  const handleReadBook = () => {
+    // Open the read.deerandbook.com website
+    Linking.openURL("https://read.deerandbook.com/home").catch((err) => {
+      console.error("Error opening URL:", err);
+      alert("Failed to open the website. Please try again.");
+    });
+  };
+
+  const handleBuyBook = () => {
+    // This will be triggered when the user wants to buy a book
+    // You can implement the logic to redirect to the store here
+    console.log("Buy Book button pressed");
   };
 
   useEffect(() => {
@@ -42,10 +56,9 @@ const PdfRead = () => {
         const decodedUrl = decodeURIComponent(event.url);
         console.log("Decoded URL:", decodedUrl);
 
-        const parsedUrl = new URL(decodedUrl);
-        console.log("Parsed URL object:", parsedUrl);
-
-        const slug = parsedUrl.searchParams.get("slug");
+        // Extract the slug from the URL
+        const urlParams = new URLSearchParams(decodedUrl.split("?")[1]);
+        const slug = urlParams.get("slug");
         console.log("Extracted Slug:", slug);
 
         if (slug) {
@@ -54,9 +67,7 @@ const PdfRead = () => {
           console.log("Setting PDF URI:", uri);
           if (pdfUriRef.current !== uri) {
             pdfUriRef.current = uri;
-            setTimeout(() => {
-              setPdfUri(uri);
-            }, 10000);
+            setPdfUri(uri); // Set the PDF URI immediately
           }
         } else {
           console.warn("No slug found in URL.");
@@ -80,87 +91,95 @@ const PdfRead = () => {
       }
     });
 
-    const interval = setInterval(() => {
-      setLoadingProgress((prevProgress) => {
-        if (prevProgress >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prevProgress + 1;
-      });
-    }, 100);
-
     return () => {
-      clearInterval(interval);
       linkingEventListener.remove();
-      setIsHorizontal(true);
-      setIsPagingEnabled(true);
-      setIsSwitchingView(false);
       setPdfUri("");
-      setLoadingProgress(0);
       setSlug("");
     };
   }, []);
 
+  if (pdfUri) {
+    return <PdfReader pdfUri={pdfUri} onBack={() => setPdfUri("")} />;
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Deer and Book Reader</Text>
-      <Text style={styles.debugText}>
-        Current PDF URI: {pdfUri || "Not Set"}
-      </Text>
-      <Button
-        title={`Switch to ${isHorizontal ? "Vertical" : "Horizontal"} View`}
-        onPress={handleSwitchView}
-      />
-      {pdfUri ? (
-        <Pdf
-          trustAllCerts={false}
-          source={{ uri: pdfUri, cache: true }}
-          style={styles.pdf}
-          horizontal={isHorizontal}
-          enablePaging={isPagingEnabled}
-          onLoadComplete={(numberOfPages) => {
-            console.log(`PDF Loaded - Number of pages: ${numberOfPages}`);
-          }}
-          onError={(error) => {
-            console.error("PDF Load Error:", error);
-            alert("Failed to load PDF. Please check the URL and try again.");
-          }}
-        />
-      ) : (
-        <Text style={styles.loadingText}>
-          Waiting for PDF URL... {loadingProgress}%
-        </Text>
-      )}
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={handleReadBook}>
+          <Text style={styles.buttonText}>Read a Book</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={handleBuyBook}>
+          <Text style={styles.buttonText}>Buy a Book</Text>
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={() =>
+          setPdfUri(
+            "https://deerandbook.com/protected/storage/app/book/pdf/1 ปีอเมริกา ss1.pdf"
+          )
+        }
+      >
+        <Text style={styles.floatingButtonText}>Go to PDF Reader</Text>
+      </TouchableOpacity>
     </View>
   );
 };
-
-export default PdfRead;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 40,
     textAlign: "center",
+  },
+  buttonContainer: {
+    width: "100%",
+    alignItems: "center",
+    gap: 20,
+  },
+  button: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    width: "80%",
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 18,
     fontWeight: "bold",
   },
-  debugText: {
+  floatingButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#007AFF",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  floatingButtonText: {
+    color: "white",
     fontSize: 14,
-    textAlign: "center",
-    color: "gray",
-    marginBottom: 10,
-  },
-  pdf: {
-    flex: 1,
-    width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
-  },
-  loadingText: {
-    textAlign: "center",
-    margin: 10,
+    fontWeight: "bold",
   },
 });
+
+export default App;
