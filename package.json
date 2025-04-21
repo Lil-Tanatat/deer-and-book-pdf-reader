@@ -11,6 +11,7 @@
   "dependencies": {
     "@config-plugins/react-native-blob-util": "^9.0.0",
     "@config-plugins/react-native-pdf": "^9.0.0",
+    "@react-native-community/picker": "^1.8.1",
     "deer-and-book-pdf-reader": "file:",
     "eas-cli": "^16.3.2",
     "expo": "~52.0.25",
