@@ -14,7 +14,8 @@ import Pdf from "react-native-pdf";
 import * as ScreenCapture from "expo-screen-capture";
 import { usePreventScreenCapture } from "expo-screen-capture";
 import PdfReader from "./components/PdfReader";
-import { WebView } from "react-native-webview"; // Import WebView
+import { WebView } from "react-native-webview";
+import VideoPlayer from "./components/VideoPlayer"; // Import the new VideoPlayer component
 
 const App = () => {
   const [pdfUri, setPdfUri] = useState("");
@@ -115,16 +116,7 @@ const App = () => {
   }
 
   if (videoUri) {
-    return (
-      <WebView
-        source={{ uri: videoUri }}
-        style={{ flex: 1 }}
-        onError={(syntheticEvent) => {
-          const { nativeEvent } = syntheticEvent;
-          console.error("WebView error: ", nativeEvent);
-        }}
-      />
-    );
+    return <VideoPlayer videoUri={videoUri} onBack={() => setVideoUri("")} />;
   }
 
   return (
@@ -139,22 +131,21 @@ const App = () => {
         <TouchableOpacity style={styles.button} onPress={handleReadBook}>
           <Text style={styles.buttonText}>Read a Book</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.button} onPress={handleBuyBook}>
           <Text style={styles.buttonText}>Buy a Book</Text>
         </TouchableOpacity>
-      </View>
 
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={() =>
-          setPdfUri(
-            `https://deerandbook.com/protected/storage/app/book/pdf/${slug}`
-          )
-        }
-      >
-        <Text style={styles.floatingButtonText}>Go to PDF Reader</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() =>
+            setPdfUri(
+              `https://deerandbook.com/protected/storage/app/book/pdf/${slug}`
+            )
+          }
+        >
+          <Text style={styles.floatingButtonText}>Read you lastest book</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

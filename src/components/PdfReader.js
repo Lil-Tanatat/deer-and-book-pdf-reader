@@ -101,9 +101,11 @@ const PdfReader = ({ pdfUri, onBack }) => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={onBack}>
-        <Text style={styles.backButtonText}>Back to Home</Text>
-      </TouchableOpacity>
+      {/* <TouchableOpacity style={styles.backButton}> */}
+      <Text onPress={onBack} style={styles.backButtonText}>
+        {"<"} Back to Home
+      </Text>
+      {/* </TouchableOpacity> */}
 
       {/* <Text style={styles.title}>Deer and Book Reader</Text> */}
       {/* <Text style={styles.debugText}>
@@ -117,12 +119,12 @@ const PdfReader = ({ pdfUri, onBack }) => {
           onSelect={handleViewChange}
         />
 
-        <CustomDropdown
+        {/* <CustomDropdown
           label="Page Display"
           value={pageDisplayMode}
           options={pageDisplayOptions}
           onSelect={handlePageDisplayChange}
-        />
+        /> */}
 
         <CustomDropdown
           label="Reading Style"
@@ -167,6 +169,8 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 16,
     color: "#000",
+
+    textAlign: "center",
   },
   title: {
     fontSize: 20,
