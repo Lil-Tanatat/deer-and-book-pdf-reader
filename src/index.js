@@ -13,22 +13,24 @@ import Pdf from "react-native-pdf";
 import * as ScreenCapture from "expo-screen-capture";
 import { usePreventScreenCapture } from "expo-screen-capture";
 import PdfReader from "./components/PdfReader";
+import VideoViewer from "./components/VideoViewer";
 
 const App = () => {
   const [pdfUri, setPdfUri] = useState("");
+  const [videoUri, setVideoUri] = useState("");
   const [slug, setSlug] = useState("");
   const pdfUriRef = useRef("");
 
   const handleBackButtonPress = () => {
-    if (pdfUri) {
+    if (pdfUri || videoUri) {
       setPdfUri("");
+      setVideoUri("");
     } else {
       BackHandler.exitApp();
     }
   };
 
   const handleReadBook = () => {
-    // Open the read.deerandbook.com website
     Linking.openURL("https://read.deerandbook.com/home").catch((err) => {
       console.error("Error opening URL:", err);
       alert("Failed to open the website. Please try again.");
@@ -40,9 +42,6 @@ const App = () => {
       console.error("Error opening URL:", err);
       alert("Failed to open the website. Please try again.");
     });
-    // This will be triggered when the user wants to buy a book
-    // You can implement the logic to redirect to the store here
-    console.log("Buy Book button pressed");
   };
 
   useEffect(() => {
@@ -60,10 +59,12 @@ const App = () => {
         const decodedUrl = decodeURIComponent(event.url);
         console.log("Decoded URL:", decodedUrl);
 
-        // Extract the slug from the URL
+        // Extract parameters from the URL
         const urlParams = new URLSearchParams(decodedUrl.split("?")[1]);
         const slug = urlParams.get("slug");
-        console.log("Extracted Slug:", slug);
+        const video = urlParams.get("video");
+
+        console.log("Extracted Parameters:", { slug, video });
 
         if (slug) {
           setSlug(slug);
@@ -71,10 +72,15 @@ const App = () => {
           console.log("Setting PDF URI:", uri);
           if (pdfUriRef.current !== uri) {
             pdfUriRef.current = uri;
-            setPdfUri(uri); // Set the PDF URI immediately
+            setPdfUri(uri);
+            setVideoUri(""); // Clear video URI if PDF is being loaded
           }
+        } else if (video) {
+          console.log("Setting Video URI:", video);
+          setVideoUri(video);
+          setPdfUri(""); // Clear PDF URI if video is being loaded
         } else {
-          console.warn("No slug found in URL.");
+          console.warn("No valid content parameter found in URL.");
         }
       } catch (error) {
         console.error("Error parsing URL:", error);
@@ -98,12 +104,17 @@ const App = () => {
     return () => {
       linkingEventListener.remove();
       setPdfUri("");
+      setVideoUri("");
       setSlug("");
     };
   }, []);
 
   if (pdfUri) {
     return <PdfReader pdfUri={pdfUri} onBack={() => setPdfUri("")} />;
+  }
+
+  if (videoUri) {
+    return <VideoViewer videoUri={videoUri} onBack={() => setVideoUri("")} />;
   }
 
   return (

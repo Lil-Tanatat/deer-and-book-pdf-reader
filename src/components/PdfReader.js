@@ -68,6 +68,7 @@ const PdfReader = ({ pdfUri, onBack }) => {
   const [isHorizontal, setIsHorizontal] = useState(true);
   const [isPagingEnabled, setIsPagingEnabled] = useState(true);
   const [pageDisplayMode, setPageDisplayMode] = useState("single");
+  const [readingStyle, setReadingStyle] = useState("page");
 
   const viewOptions = [
     { label: "Horizontal", value: "horizontal" },
@@ -79,13 +80,23 @@ const PdfReader = ({ pdfUri, onBack }) => {
     { label: "Double Page", value: "double" },
   ];
 
+  const readingStyleOptions = [
+    { label: "Page by Page", value: "page" },
+    { label: "Continuous", value: "continuous" },
+  ];
+
   const handleViewChange = (value) => {
     setIsHorizontal(value === "horizontal");
-    setIsPagingEnabled(value === "horizontal");
+    // setIsPagingEnabled(value === "horizontal");
   };
 
   const handlePageDisplayChange = (value) => {
     setPageDisplayMode(value);
+  };
+
+  const handleReadingStyleChange = (value) => {
+    setReadingStyle(value);
+    setIsPagingEnabled(value === "page");
   };
 
   return (
@@ -112,6 +123,13 @@ const PdfReader = ({ pdfUri, onBack }) => {
           options={pageDisplayOptions}
           onSelect={handlePageDisplayChange}
         />
+
+        <CustomDropdown
+          label="Reading Style"
+          value={readingStyle}
+          options={readingStyleOptions}
+          onSelect={handleReadingStyleChange}
+        />
       </View>
       <Pdf
         trustAllCerts={false}
@@ -119,6 +137,7 @@ const PdfReader = ({ pdfUri, onBack }) => {
         style={styles.pdf}
         horizontal={isHorizontal}
         enablePaging={isPagingEnabled}
+        spacing={pageDisplayMode === "double" ? 10 : 0}
         onLoadComplete={(numberOfPages) => {
           console.log(`PDF Loaded - Number of pages: ${numberOfPages}`);
         }}
