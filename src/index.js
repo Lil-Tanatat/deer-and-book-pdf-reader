@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   Dimensions,
   Button,
@@ -13,7 +14,6 @@ import Pdf from "react-native-pdf";
 import * as ScreenCapture from "expo-screen-capture";
 import { usePreventScreenCapture } from "expo-screen-capture";
 import PdfReader from "./components/PdfReader";
-import VideoViewer from "./components/VideoViewer";
 
 const App = () => {
   const [pdfUri, setPdfUri] = useState("");
@@ -113,13 +113,13 @@ const App = () => {
     return <PdfReader pdfUri={pdfUri} onBack={() => setPdfUri("")} />;
   }
 
-  if (videoUri) {
-    return <VideoViewer videoUri={videoUri} onBack={() => setVideoUri("")} />;
-  }
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Deer and Book Reader</Text>
+      <Image
+        source={require("../assets/logo-deer.png")}
+        style={{ width: 150, height: 120, objectFit: "contain" }}
+      />
+      <Text style={styles.title}>Deer and Book PDF Reader</Text>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={handleReadBook}>
@@ -135,7 +135,7 @@ const App = () => {
         style={styles.floatingButton}
         onPress={() =>
           setPdfUri(
-            "https://deerandbook.com/protected/storage/app/book/pdf/1 ปีอเมริกา ss1.pdf"
+            `https://deerandbook.com/protected/storage/app/book/pdf/${slug}`
           )
         }
       >
@@ -164,11 +164,11 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   button: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#9c60f5",
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 10,
-    width: "80%",
+    minWidth: "80%",
     alignItems: "center",
   },
   buttonText: {
