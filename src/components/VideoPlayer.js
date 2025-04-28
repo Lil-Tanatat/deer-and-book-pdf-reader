@@ -5,11 +5,15 @@ import {
   TouchableOpacity,
   Text,
   Dimensions,
+  useWindowDimensions, // Import hook for dynamic dimensions
 } from "react-native";
 import { WebView } from "react-native-webview";
+import { usePreventScreenCapture } from "expo-screen-capture"; // Added import
 
 const VideoPlayer = ({ videoUri, onBack }) => {
+  usePreventScreenCapture(); // Added screen capture prevention
   const [isLoading, setIsLoading] = useState(true);
+  const { width, height } = useWindowDimensions(); // Get dynamic dimensions
 
   return (
     <View style={styles.container}>
@@ -20,7 +24,7 @@ const VideoPlayer = ({ videoUri, onBack }) => {
       )}
       <WebView
         source={{ uri: videoUri }}
-        style={styles.webview}
+        style={[styles.webview, { width, height }]} // Dynamically adjust size
         onLoadEnd={() => setIsLoading(false)}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
@@ -41,7 +45,6 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
-    width: Dimensions.get("window").width,
   },
   backButton: {
     position: "absolute",

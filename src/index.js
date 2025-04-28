@@ -125,7 +125,7 @@ const App = () => {
         source={require("../assets/logo-deer.png")}
         style={{ width: 150, height: 120, objectFit: "contain" }}
       />
-      <Text style={styles.title}>Deer and Book PDF Reader</Text>
+      {/* <Text style={styles.title}>Deer and Book PDF Reader</Text> */}
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={handleReadBook}>
@@ -135,7 +135,7 @@ const App = () => {
           <Text style={styles.buttonText}>Buy a Book</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.button}
           onPress={() =>
             setPdfUri(
@@ -144,7 +144,7 @@ const App = () => {
           }
         >
           <Text style={styles.floatingButtonText}>Read you lastest book</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );

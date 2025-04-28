@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   Pressable,
+  useWindowDimensions,
 } from "react-native";
 import Pdf from "react-native-pdf";
 import { usePreventScreenCapture } from "expo-screen-capture";
@@ -69,6 +70,11 @@ const PdfReader = ({ pdfUri, onBack }) => {
   const [isPagingEnabled, setIsPagingEnabled] = useState(true);
   const [pageDisplayMode, setPageDisplayMode] = useState("single");
   const [readingStyle, setReadingStyle] = useState("page");
+  const { width, height } = useWindowDimensions();
+
+  useEffect(() => {
+    setIsHorizontal(width > height);
+  }, [width, height]);
 
   const viewOptions = [
     { label: "Horizontal", value: "horizontal" },
@@ -101,16 +107,10 @@ const PdfReader = ({ pdfUri, onBack }) => {
 
   return (
     <View style={styles.container}>
-      {/* <TouchableOpacity style={styles.backButton}> */}
       <Text onPress={onBack} style={styles.backButtonText}>
         {"<"} Back to Home
       </Text>
-      {/* </TouchableOpacity> */}
 
-      {/* <Text style={styles.title}>Deer and Book Reader</Text> */}
-      {/* <Text style={styles.debugText}>
-        Current PDF URI: {pdfUri || "Not Set"}
-      </Text> */}
       <View style={styles.controlsContainer}>
         <CustomDropdown
           label="View Mode"
@@ -118,13 +118,6 @@ const PdfReader = ({ pdfUri, onBack }) => {
           options={viewOptions}
           onSelect={handleViewChange}
         />
-
-        {/* <CustomDropdown
-          label="Page Display"
-          value={pageDisplayMode}
-          options={pageDisplayOptions}
-          onSelect={handlePageDisplayChange}
-        /> */}
 
         <CustomDropdown
           label="Reading Style"
@@ -136,7 +129,7 @@ const PdfReader = ({ pdfUri, onBack }) => {
       <Pdf
         trustAllCerts={false}
         source={{ uri: pdfUri, cache: true }}
-        style={styles.pdf}
+        style={[styles.pdf, { width, height }]}
         horizontal={isHorizontal}
         enablePaging={isPagingEnabled}
         spacing={pageDisplayMode === "double" ? 10 : 0}
@@ -243,8 +236,6 @@ const styles = StyleSheet.create({
   },
   pdf: {
     flex: 1,
-    width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
   },
 });
 
