@@ -106,7 +106,7 @@ const PdfReader = ({ pdfUri, onBack }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: "#9c60f5" }]}>
       <Text onPress={onBack} style={styles.backButtonText}>
         {"<"} Back to Home
       </Text>
@@ -129,7 +129,10 @@ const PdfReader = ({ pdfUri, onBack }) => {
       <Pdf
         trustAllCerts={false}
         source={{ uri: pdfUri, cache: true }}
-        style={[styles.pdf, { width, height }]}
+        style={[
+          styles.pdf,
+          { width, height: height - 120, backgroundColor: "#9c60f5" },
+        ]}
         horizontal={isHorizontal}
         enablePaging={isPagingEnabled}
         spacing={pageDisplayMode === "double" ? 10 : 0}
@@ -149,6 +152,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#9c60f5",
   },
   backButton: {
     position: "absolute",
@@ -236,6 +240,7 @@ const styles = StyleSheet.create({
   },
   pdf: {
     flex: 1,
+    backgroundColor: "#9c60f5",
   },
 });
 
