@@ -73,7 +73,7 @@ const PdfReader = ({ pdfUri, onBack }) => {
   const { width, height } = useWindowDimensions();
 
   useEffect(() => {
-    setIsHorizontal(width > height);
+    setIsHorizontal(width > height); // Adjust layout based on orientation
   }, [width, height]);
 
   const viewOptions = [

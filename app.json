@@ -3,7 +3,7 @@
     "name": "deer-and-book-pdf-reader",
     "slug": "deer-and-book-pdf-reader",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "plugin": [
       "@config-plugins/react-native-blob-util",

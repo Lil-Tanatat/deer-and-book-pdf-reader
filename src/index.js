@@ -16,8 +16,10 @@ import { usePreventScreenCapture } from "expo-screen-capture";
 import PdfReader from "./components/PdfReader";
 import { WebView } from "react-native-webview";
 import VideoPlayer from "./components/VideoPlayer"; // Import the new VideoPlayer component
+import * as ScreenOrientation from "expo-screen-orientation";
 
 const App = () => {
+  usePreventScreenCapture();
   const [pdfUri, setPdfUri] = useState("");
   const [videoUri, setVideoUri] = useState("");
   const [slug, setSlug] = useState("");
@@ -47,6 +49,11 @@ const App = () => {
   };
 
   useEffect(() => {
+    const enableAutoRotation = async () => {
+      await ScreenOrientation.unlockAsync(); // Allow auto-rotation
+    };
+    enableAutoRotation();
+
     ScreenCapture.preventScreenCaptureAsync();
 
     const handleDeepLink = (event) => {
@@ -104,6 +111,9 @@ const App = () => {
     });
 
     return () => {
+      ScreenOrientation.lockAsync(
+        ScreenOrientation.OrientationLock.PORTRAIT_UP
+      ); // Lock back to portrait
       linkingEventListener.remove();
       setPdfUri("");
       setVideoUri("");

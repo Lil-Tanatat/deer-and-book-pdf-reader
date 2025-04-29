@@ -13,7 +13,7 @@ import { usePreventScreenCapture } from "expo-screen-capture"; // Added import
 const VideoPlayer = ({ videoUri, onBack }) => {
   usePreventScreenCapture(); // Added screen capture prevention
   const [isLoading, setIsLoading] = useState(true);
-  const { width, height } = useWindowDimensions(); // Get dynamic dimensions
+  const { width, height } = useWindowDimensions(); // Dynamically adjust dimensions
 
   return (
     <View style={styles.container}>
@@ -24,7 +24,7 @@ const VideoPlayer = ({ videoUri, onBack }) => {
       )}
       <WebView
         source={{ uri: videoUri }}
-        style={[styles.webview, { width, height }]} // Dynamically adjust size
+        style={[styles.webview, { width, height }]} // Adjust size dynamically
         onLoadEnd={() => setIsLoading(false)}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
