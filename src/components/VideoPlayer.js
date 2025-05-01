@@ -6,6 +6,7 @@ import {
   Text,
   Dimensions,
   useWindowDimensions, // Import hook for dynamic dimensions
+  StatusBar,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { usePreventScreenCapture } from "expo-screen-capture"; // Added import
@@ -17,6 +18,11 @@ const VideoPlayer = ({ videoUri, onBack }) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar
+        backgroundColor="transparent"
+        translucent={true}
+        barStyle="light-content"
+      />
       {isLoading && (
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
@@ -42,6 +48,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "black",
+    paddingTop: StatusBar.currentHeight,
   },
   webview: {
     flex: 1,

@@ -9,6 +9,7 @@ import {
   Linking,
   BackHandler,
   TouchableOpacity,
+  StatusBar,
 } from "react-native";
 import Pdf from "react-native-pdf";
 import * as ScreenCapture from "expo-screen-capture";
@@ -120,6 +121,11 @@ const App = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar
+        backgroundColor="transparent"
+        translucent={true}
+        barStyle="dark-content"
+      />
       <LinearGradient colors={["#B347FD", "#7B77F2"]} style={styles.header}>
         <Image
           source={require("../assets/logo-white.png")}
@@ -192,6 +198,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
+    paddingTop: StatusBar.currentHeight,
   },
   logo: {
     width: 200,

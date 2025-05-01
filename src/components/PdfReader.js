@@ -8,6 +8,7 @@ import {
   Modal,
   Pressable,
   useWindowDimensions,
+  StatusBar,
 } from "react-native";
 import Pdf from "react-native-pdf";
 import { usePreventScreenCapture } from "expo-screen-capture";
@@ -207,6 +208,11 @@ const PdfReader = ({ pdfUri, onBack }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: "#9c60f5" }]}>
+      <StatusBar
+        backgroundColor="transparent"
+        translucent={true}
+        barStyle="light-content"
+      />
       {!isOrientationChanging && (
         <Pdf
           ref={pdfRef}
@@ -264,6 +270,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#9c60f5",
+    paddingTop: StatusBar.currentHeight,
   },
   backButton: {
     position: "absolute",
@@ -361,7 +368,7 @@ const styles = StyleSheet.create({
     width: "100vw",
     backgroundColor: "#9c60f5",
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 20 + StatusBar.currentHeight,
     position: "absolute",
     top: 0,
     left: 0,
