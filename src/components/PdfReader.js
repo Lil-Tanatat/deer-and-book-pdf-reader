@@ -29,54 +29,94 @@ const readingStyleOptions = [
   { label: "Continuous", value: "continuous" },
 ];
 
-const CustomDropdown = ({ label, value, options, onSelect }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
+const CustomDropdown = ({
+  isOpen,
+  onToggle,
+  isHorizontal,
+  readingStyle,
+  onViewChange,
+  onReadingStyleChange,
+}) => {
   return (
-    <View style={styles.pickerContainer}>
-      <Text style={styles.pickerLabel}>{label}</Text>
-      <TouchableOpacity
-        style={styles.dropdownButton}
-        onPress={() => setIsOpen(true)}
-      >
+    <View style={styles.dropdownContainer}>
+      <TouchableOpacity style={styles.dropdownButton} onPress={onToggle}>
         <Text style={styles.dropdownButtonText}>
-          {options.find((opt) => opt.value === value)?.label || value}
+          {isHorizontal ? "Horizontal" : "Vertical"} -{" "}
+          {readingStyle === "page" ? "Page by Page" : "Continuous"}
         </Text>
       </TouchableOpacity>
 
-      <Modal
-        visible={isOpen}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setIsOpen(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setIsOpen(false)}>
-          <View style={styles.modalContent}>
-            {options.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  styles.optionButton,
-                  value === option.value && styles.selectedOption,
-                ]}
-                onPress={() => {
-                  onSelect(option.value);
-                  setIsOpen(false);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.optionText,
-                    value === option.value && styles.selectedOptionText,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
+      {isOpen && (
+        <View style={styles.dropdownMenu}>
+          <Text style={styles.dropdownTitle}>View Mode:</Text>
+          <TouchableOpacity
+            style={[
+              styles.dropdownOption,
+              isHorizontal && styles.selectedOption,
+            ]}
+            onPress={() => onViewChange(true)}
+          >
+            <Text
+              style={[
+                styles.optionText,
+                isHorizontal && styles.selectedOptionText,
+              ]}
+            >
+              Horizontal
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.dropdownOption,
+              !isHorizontal && styles.selectedOption,
+            ]}
+            onPress={() => onViewChange(false)}
+          >
+            <Text
+              style={[
+                styles.optionText,
+                !isHorizontal && styles.selectedOptionText,
+              ]}
+            >
+              Vertical
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={styles.dropdownTitle}>Reading Style:</Text>
+          <TouchableOpacity
+            style={[
+              styles.dropdownOption,
+              readingStyle === "page" && styles.selectedOption,
+            ]}
+            onPress={() => onReadingStyleChange("page")}
+          >
+            <Text
+              style={[
+                styles.optionText,
+                readingStyle === "page" && styles.selectedOptionText,
+              ]}
+            >
+              Page by Page
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.dropdownOption,
+              readingStyle === "continuous" && styles.selectedOption,
+            ]}
+            onPress={() => onReadingStyleChange("continuous")}
+          >
+            <Text
+              style={[
+                styles.optionText,
+                readingStyle === "continuous" && styles.selectedOptionText,
+              ]}
+            >
+              Continuous
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -87,29 +127,26 @@ const Header = ({
   readingStyle,
   handleViewChange,
   handleReadingStyleChange,
-}) => (
-  <View style={styles.header}>
-    <Text onPress={onBack} style={styles.backButtonText}>
-      {"<"} Back to Home
-    </Text>
+}) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-    <View style={styles.controlsContainer}>
-      <CustomDropdown
-        label="View Mode"
-        value={isHorizontal ? "horizontal" : "vertical"}
-        options={viewOptions}
-        onSelect={handleViewChange}
-      />
+  return (
+    <View style={styles.header}>
+      <Text onPress={onBack} style={styles.backButtonText}>
+        {"<"} Back to Home
+      </Text>
 
       <CustomDropdown
-        label="Reading Style"
-        value={readingStyle}
-        options={readingStyleOptions}
-        onSelect={handleReadingStyleChange}
+        isOpen={isDropdownOpen}
+        onToggle={() => setIsDropdownOpen(!isDropdownOpen)}
+        isHorizontal={isHorizontal}
+        readingStyle={readingStyle}
+        onViewChange={handleViewChange}
+        onReadingStyleChange={handleReadingStyleChange}
       />
     </View>
-  </View>
-);
+  );
+};
 
 const PdfReader = ({ pdfUri, onBack }) => {
   usePreventScreenCapture();
@@ -156,20 +193,13 @@ const PdfReader = ({ pdfUri, onBack }) => {
     orientationTimeout.current = setTimeout(async () => {
       await unloadPdf();
       if (!unmountingRef.current) {
-        setIsHorizontal(width > height);
         setIsOrientationChanging(false);
       }
     }, 500);
   }, [width, height, unloadPdf]);
 
-  useEffect(() => {
-    if (!isOrientationChanging && !unmountingRef.current) {
-      unloadPdf();
-    }
-  }, [pdfUri, isOrientationChanging, unloadPdf]);
-
   const handleViewChange = (value) => {
-    setIsHorizontal(value === "horizontal");
+    setIsHorizontal(value);
   };
 
   const handlePageDisplayChange = (value) => {
@@ -382,6 +412,50 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: "#9c60f5",
     zIndex: 1,
+  },
+  dropdownContainer: {
+    position: "relative",
+    zIndex: 2,
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: "white",
+    borderRadius: 5,
+    padding: 10,
+    marginTop: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  dropdownTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#666",
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  dropdownOption: {
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 5,
+  },
+  selectedOption: {
+    backgroundColor: "#9c60f5",
+  },
+  optionText: {
+    color: "#000",
+    fontSize: 16,
+  },
+  selectedOptionText: {
+    color: "white",
   },
 });
 
