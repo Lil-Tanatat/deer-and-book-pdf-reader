@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,22 @@ import {
 } from "react-native";
 import Pdf from "react-native-pdf";
 import { usePreventScreenCapture } from "expo-screen-capture";
+
+// Move these options arrays outside of components
+const viewOptions = [
+  { label: "Horizontal", value: "horizontal" },
+  { label: "Vertical", value: "vertical" },
+];
+
+const pageDisplayOptions = [
+  { label: "Single Page", value: "single" },
+  { label: "Double Page", value: "double" },
+];
+
+const readingStyleOptions = [
+  { label: "Page by Page", value: "page" },
+  { label: "Continuous", value: "continuous" },
+];
 
 const CustomDropdown = ({ label, value, options, onSelect }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -64,36 +80,95 @@ const CustomDropdown = ({ label, value, options, onSelect }) => {
   );
 };
 
+const Header = ({
+  onBack,
+  isHorizontal,
+  readingStyle,
+  handleViewChange,
+  handleReadingStyleChange,
+}) => (
+  <View style={styles.header}>
+    <Text onPress={onBack} style={styles.backButtonText}>
+      {"<"} Back to Home
+    </Text>
+
+    <View style={styles.controlsContainer}>
+      <CustomDropdown
+        label="View Mode"
+        value={isHorizontal ? "horizontal" : "vertical"}
+        options={viewOptions}
+        onSelect={handleViewChange}
+      />
+
+      <CustomDropdown
+        label="Reading Style"
+        value={readingStyle}
+        options={readingStyleOptions}
+        onSelect={handleReadingStyleChange}
+      />
+    </View>
+  </View>
+);
+
 const PdfReader = ({ pdfUri, onBack }) => {
   usePreventScreenCapture();
   const [isHorizontal, setIsHorizontal] = useState(true);
   const [isPagingEnabled, setIsPagingEnabled] = useState(true);
   const [pageDisplayMode, setPageDisplayMode] = useState("single");
   const [readingStyle, setReadingStyle] = useState("page");
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [touchStartTime, setTouchStartTime] = useState(0);
+  const [touchStartY, setTouchStartY] = useState(0);
+  const [lastTapTime, setLastTapTime] = useState(0);
+  const [isOrientationChanging, setIsOrientationChanging] = useState(false);
   const { width, height } = useWindowDimensions();
+  const pdfRef = React.useRef(null);
+  const orientationTimeout = React.useRef(null);
+  const unmountingRef = React.useRef(false);
+
+  const unloadPdf = useCallback(async () => {
+    if (pdfRef.current && !unmountingRef.current) {
+      try {
+        await pdfRef.current.unloadAsync?.();
+      } catch (error) {
+        console.warn("Error unloading PDF:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
-    setIsHorizontal(width > height); // Adjust layout based on orientation
-  }, [width, height]);
+    return () => {
+      unmountingRef.current = true;
+      if (orientationTimeout.current) {
+        clearTimeout(orientationTimeout.current);
+      }
+      unloadPdf();
+    };
+  }, [unloadPdf]);
 
-  const viewOptions = [
-    { label: "Horizontal", value: "horizontal" },
-    { label: "Vertical", value: "vertical" },
-  ];
+  useEffect(() => {
+    setIsOrientationChanging(true);
+    if (orientationTimeout.current) {
+      clearTimeout(orientationTimeout.current);
+    }
 
-  const pageDisplayOptions = [
-    { label: "Single Page", value: "single" },
-    { label: "Double Page", value: "double" },
-  ];
+    orientationTimeout.current = setTimeout(async () => {
+      await unloadPdf();
+      if (!unmountingRef.current) {
+        setIsHorizontal(width > height);
+        setIsOrientationChanging(false);
+      }
+    }, 500);
+  }, [width, height, unloadPdf]);
 
-  const readingStyleOptions = [
-    { label: "Page by Page", value: "page" },
-    { label: "Continuous", value: "continuous" },
-  ];
+  useEffect(() => {
+    if (!isOrientationChanging && !unmountingRef.current) {
+      unloadPdf();
+    }
+  }, [pdfUri, isOrientationChanging, unloadPdf]);
 
   const handleViewChange = (value) => {
     setIsHorizontal(value === "horizontal");
-    // setIsPagingEnabled(value === "horizontal");
   };
 
   const handlePageDisplayChange = (value) => {
@@ -105,45 +180,81 @@ const PdfReader = ({ pdfUri, onBack }) => {
     setIsPagingEnabled(value === "page");
   };
 
+  const toggleHeader = () => {
+    setIsHeaderVisible(!isHeaderVisible);
+  };
+
+  const handleTouchStart = (event) => {
+    setTouchStartTime(Date.now());
+    setTouchStartY(event.nativeEvent.pageY);
+  };
+
+  const handleTouchEnd = (event) => {
+    const touchEndTime = Date.now();
+    const touchEndY = event.nativeEvent.pageY;
+    const touchDuration = touchEndTime - touchStartTime;
+    const touchDistance = Math.abs(touchEndY - touchStartY);
+
+    const timeBetweenTaps = touchEndTime - lastTapTime;
+    const isDoubleTap = timeBetweenTaps < 50;
+
+    setLastTapTime(touchEndTime);
+
+    if (!isDoubleTap && touchDuration >= 100 && touchDistance < 10) {
+      toggleHeader();
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: "#9c60f5" }]}>
-      <Text onPress={onBack} style={styles.backButtonText}>
-        {"<"} Back to Home
-      </Text>
-
-      <View style={styles.controlsContainer}>
-        <CustomDropdown
-          label="View Mode"
-          value={isHorizontal ? "horizontal" : "vertical"}
-          options={viewOptions}
-          onSelect={handleViewChange}
+      {!isOrientationChanging && (
+        <Pdf
+          ref={pdfRef}
+          trustAllCerts={false}
+          source={{ uri: pdfUri, cache: true }}
+          style={[
+            styles.pdf,
+            {
+              width,
+              height,
+              backgroundColor: "#9c60f5",
+            },
+          ]}
+          horizontal={isHorizontal}
+          enablePaging={isPagingEnabled}
+          spacing={pageDisplayMode === "double" ? 10 : 0}
+          onLoadComplete={(numberOfPages) => {
+            if (!unmountingRef.current) {
+              console.log(`PDF Loaded - Number of pages: ${numberOfPages}`);
+            }
+          }}
+          onError={(error) => {
+            if (!unmountingRef.current) {
+              console.error("PDF Load Error:", error);
+              alert("Failed to load PDF. Please check the URL and try again.");
+            }
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          enableAntialiasing={true}
+          onPageChanged={(page) => {
+            if (!unmountingRef.current) {
+              console.log(`Current page: ${page}`);
+            }
+          }}
         />
-
-        <CustomDropdown
-          label="Reading Style"
-          value={readingStyle}
-          options={readingStyleOptions}
-          onSelect={handleReadingStyleChange}
-        />
-      </View>
-      <Pdf
-        trustAllCerts={false}
-        source={{ uri: pdfUri, cache: true }}
-        style={[
-          styles.pdf,
-          { width, height: height - 120, backgroundColor: "#9c60f5" },
-        ]}
-        horizontal={isHorizontal}
-        enablePaging={isPagingEnabled}
-        spacing={pageDisplayMode === "double" ? 10 : 0}
-        onLoadComplete={(numberOfPages) => {
-          console.log(`PDF Loaded - Number of pages: ${numberOfPages}`);
-        }}
-        onError={(error) => {
-          console.error("PDF Load Error:", error);
-          alert("Failed to load PDF. Please check the URL and try again.");
-        }}
-      />
+      )}
+      {isHeaderVisible && (
+        <View style={styles.headerOverlay}>
+          <Header
+            onBack={onBack}
+            isHorizontal={isHorizontal}
+            readingStyle={readingStyle}
+            handleViewChange={handleViewChange}
+            handleReadingStyleChange={handleReadingStyleChange}
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -165,9 +276,9 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: "#000",
-
-    textAlign: "center",
+    color: "white",
+    textAlign: "left",
+    marginBottom: 10,
   },
   title: {
     fontSize: 20,
@@ -184,8 +295,9 @@ const styles = StyleSheet.create({
   controlsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginTop: 60,
+    marginTop: 5,
     marginBottom: 10,
+    width: "100%",
   },
   pickerContainer: {
     flex: 1,
@@ -195,6 +307,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 5,
     textAlign: "center",
+    color: "white",
+    fontWeight: "bold",
   },
   dropdownButton: {
     height: 50,
@@ -241,6 +355,26 @@ const styles = StyleSheet.create({
   pdf: {
     flex: 1,
     backgroundColor: "#9c60f5",
+    zIndex: 0,
+  },
+  header: {
+    width: "100vw",
+    backgroundColor: "#9c60f5",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1,
+  },
+  headerOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#9c60f5",
+    zIndex: 1,
   },
 });
 

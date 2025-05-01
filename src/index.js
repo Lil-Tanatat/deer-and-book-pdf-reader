@@ -15,8 +15,8 @@ import * as ScreenCapture from "expo-screen-capture";
 import { usePreventScreenCapture } from "expo-screen-capture";
 import PdfReader from "./components/PdfReader";
 import { WebView } from "react-native-webview";
-import VideoPlayer from "./components/VideoPlayer"; // Import the new VideoPlayer component
-import * as ScreenOrientation from "expo-screen-orientation";
+import VideoPlayer from "./components/VideoPlayer";
+import LinearGradient from "react-native-linear-gradient";
 
 const App = () => {
   usePreventScreenCapture();
@@ -49,11 +49,6 @@ const App = () => {
   };
 
   useEffect(() => {
-    const enableAutoRotation = async () => {
-      await ScreenOrientation.unlockAsync(); // Allow auto-rotation
-    };
-    enableAutoRotation();
-
     ScreenCapture.preventScreenCaptureAsync();
 
     const handleDeepLink = (event) => {
@@ -68,7 +63,6 @@ const App = () => {
         const decodedUrl = decodeURIComponent(event.url);
         console.log("Decoded URL:", decodedUrl);
 
-        // Extract parameters from the URL
         const urlParams = new URLSearchParams(decodedUrl.split("?")[1]);
         const slug = urlParams.get("slug");
         const video = urlParams.get("video");
@@ -82,12 +76,12 @@ const App = () => {
           if (pdfUriRef.current !== uri) {
             pdfUriRef.current = uri;
             setPdfUri(uri);
-            setVideoUri(""); // Clear video URI if PDF is being loaded
+            setVideoUri("");
           }
         } else if (video) {
           console.log("Setting Video URI:", video);
           setVideoUri(video);
-          setPdfUri(""); // Clear PDF URI if video is being loaded
+          setPdfUri("");
         } else {
           console.warn("No valid content parameter found in URL.");
         }
@@ -96,13 +90,11 @@ const App = () => {
       }
     };
 
-    // Listen for deep link events
     const linkingEventListener = Linking.addEventListener(
       "url",
       handleDeepLink
     );
 
-    // Check if the app was opened with a deep link initially
     Linking.getInitialURL().then((url) => {
       if (url) {
         console.log("Initial URL detected:", url);
@@ -111,9 +103,6 @@ const App = () => {
     });
 
     return () => {
-      ScreenOrientation.lockAsync(
-        ScreenOrientation.OrientationLock.PORTRAIT_UP
-      ); // Lock back to portrait
       linkingEventListener.remove();
       setPdfUri("");
       setVideoUri("");
@@ -131,30 +120,58 @@ const App = () => {
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../assets/logo-deer.png")}
-        style={{ width: 150, height: 120, objectFit: "contain" }}
-      />
-      {/* <Text style={styles.title}>Deer and Book PDF Reader</Text> */}
+      <LinearGradient colors={["#B347FD", "#7B77F2"]} style={styles.header}>
+        <Image
+          source={require("../assets/logo-white.png")}
+          style={styles.logo}
+        />
+      </LinearGradient>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={handleReadBook}>
-          <Text style={styles.buttonText}>Read a Book</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleBuyBook}>
-          <Text style={styles.buttonText}>Buy a Book</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity onPress={handleReadBook}>
+            <LinearGradient
+              colors={["#B347FD", "#7B77F2"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.button}
+            >
+              <Image
+                source={require("../assets/icon/read.png")}
+                style={styles.buttonIcon}
+              />
+              <Text style={styles.buttonText}>Read a Book</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-        {/* <TouchableOpacity
-          style={styles.button}
-          onPress={() =>
-            setPdfUri(
-              `https://deerandbook.com/protected/storage/app/book/pdf/${slug}`
-            )
-          }
-        >
-          <Text style={styles.floatingButtonText}>Read you lastest book</Text>
-        </TouchableOpacity> */}
+          <TouchableOpacity onPress={handleBuyBook}>
+            <LinearGradient
+              colors={["#B347FD", "#7B77F2"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.button}
+            >
+              <Image
+                source={require("../assets/icon/cart.png")}
+                style={styles.buttonIcon}
+              />
+              <Text style={styles.buttonText}>Buy a Book</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.imageContainer}>
+        <LinearGradient
+          colors={["#7B77F2", "transparent"]}
+          style={styles.imageBackground}
+          start={{ x: 0.5, y: 1 }}
+          end={{ x: 0.5, y: 0 }}
+        />
+        <Image
+          source={require("../assets/image/main.png")}
+          style={styles.mainImage}
+        />
       </View>
     </View>
   );
@@ -163,33 +180,59 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    width: "100%",
+    height: "100%",
+  },
+  header: {
+    width: "100%",
+    height: "40vh",
     justifyContent: "center",
     alignItems: "center",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 40,
-    textAlign: "center",
+  logo: {
+    width: 200,
+    height: 150,
+    objectFit: "contain",
+    padding: 10,
   },
   buttonContainer: {
     width: "100%",
+    paddingHorizontal: 20,
+    position: "absolute",
+    top: "45%",
+    transform: [{ translateY: -75 }],
+    zIndex: 2,
+  },
+  buttonRow: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 20,
   },
   button: {
-    backgroundColor: "#9c60f5",
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    minWidth: "80%",
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    justifyContent: "center",
     alignItems: "center",
+    padding: 0,
+  },
+  buttonIcon: {
+    width: 40,
+    height: 40,
+    marginBottom: 12,
+    tintColor: "white",
   },
   buttonText: {
     color: "white",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
+    textAlign: "center",
+    paddingHorizontal: 10,
   },
   floatingButton: {
     position: "absolute",
@@ -209,6 +252,27 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     fontWeight: "bold",
+  },
+  imageContainer: {
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    height: 300,
+    alignItems: "center",
+    zIndex: 1,
+  },
+  imageBackground: {
+    position: "absolute",
+    bottom: 0,
+    width: "200%",
+    height: "200%",
+    borderRadius: 0,
+    transform: [{ scaleX: 1.5 }],
+  },
+  mainImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "contain",
   },
 });
 
