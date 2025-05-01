@@ -9,6 +9,7 @@ import {
   Pressable,
   useWindowDimensions,
   StatusBar,
+  Image,
 } from "react-native";
 import Pdf from "react-native-pdf";
 import { usePreventScreenCapture } from "expo-screen-capture";
@@ -40,81 +41,123 @@ const CustomDropdown = ({
   return (
     <View style={styles.dropdownContainer}>
       <TouchableOpacity style={styles.dropdownButton} onPress={onToggle}>
-        <Text style={styles.dropdownButtonText}>
-          {isHorizontal ? "Horizontal" : "Vertical"} -{" "}
-          {readingStyle === "page" ? "Page by Page" : "Continuous"}
-        </Text>
+        <View style={styles.ImageContainer}>
+          <Image
+            source={require("../../assets/icon/read-option.png")}
+            style={styles.dropdownButtonImage}
+          />
+        </View>
       </TouchableOpacity>
 
       {isOpen && (
         <View style={styles.dropdownMenu}>
           <Text style={styles.dropdownTitle}>View Mode:</Text>
-          <TouchableOpacity
-            style={[
-              styles.dropdownOption,
-              isHorizontal && styles.selectedOption,
-            ]}
-            onPress={() => onViewChange(true)}
-          >
-            <Text
+          <View style={styles.viewModeContainer}>
+            <TouchableOpacity
               style={[
-                styles.optionText,
-                isHorizontal && styles.selectedOptionText,
+                styles.dropdownOption,
+                styles.halfWidth,
+                isHorizontal && styles.selectedOption,
               ]}
+              onPress={() => onViewChange(true)}
             >
-              Horizontal
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.dropdownOption,
-              !isHorizontal && styles.selectedOption,
-            ]}
-            onPress={() => onViewChange(false)}
-          >
-            <Text
+              <Image
+                source={
+                  isHorizontal
+                    ? require("../../assets/icon/horizontal-white.png")
+                    : require("../../assets/icon/horizontal.png")
+                }
+                style={styles.optionImage}
+              />
+              <Text
+                style={[
+                  styles.optionText,
+                  isHorizontal && styles.selectedOptionText,
+                ]}
+              >
+                Horizontal
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[
-                styles.optionText,
-                !isHorizontal && styles.selectedOptionText,
+                styles.dropdownOption,
+                styles.halfWidth,
+                !isHorizontal && styles.selectedOption,
               ]}
+              onPress={() => onViewChange(false)}
             >
-              Vertical
-            </Text>
-          </TouchableOpacity>
+              <Image
+                source={
+                  !isHorizontal
+                    ? require("../../assets/icon/vertical-white.png")
+                    : require("../../assets/icon/vertical.png")
+                }
+                style={styles.optionImage}
+              />
+              <Text
+                style={[
+                  styles.optionText,
+                  !isHorizontal && styles.selectedOptionText,
+                ]}
+              >
+                Vertical
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           <Text style={styles.dropdownTitle}>Reading Style:</Text>
-          <TouchableOpacity
-            style={[
-              styles.dropdownOption,
-              readingStyle === "page" && styles.selectedOption,
-            ]}
-            onPress={() => onReadingStyleChange("page")}
-          >
-            <Text
+          <View style={styles.viewModeContainer}>
+            <TouchableOpacity
               style={[
-                styles.optionText,
-                readingStyle === "page" && styles.selectedOptionText,
+                styles.dropdownOption,
+                styles.halfWidth,
+                readingStyle === "page" && styles.selectedOption,
               ]}
+              onPress={() => onReadingStyleChange("page")}
             >
-              Page by Page
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.dropdownOption,
-              readingStyle === "continuous" && styles.selectedOption,
-            ]}
-            onPress={() => onReadingStyleChange("continuous")}
-          >
-            <Text
+              <Image
+                source={
+                  readingStyle === "page"
+                    ? require("../../assets/icon/single-white.png")
+                    : require("../../assets/icon/single.png")
+                }
+                style={styles.optionImage}
+              />
+              <Text
+                style={[
+                  styles.optionText,
+                  readingStyle === "page" && styles.selectedOptionText,
+                ]}
+              >
+                Single Page
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[
-                styles.optionText,
-                readingStyle === "continuous" && styles.selectedOptionText,
+                styles.dropdownOption,
+                styles.halfWidth,
+                readingStyle === "continuous" && styles.selectedOption,
               ]}
+              onPress={() => onReadingStyleChange("continuous")}
             >
-              Continuous
-            </Text>
-          </TouchableOpacity>
+              <Image
+                source={
+                  readingStyle === "continuous"
+                    ? require("../../assets/icon/continue-white.png")
+                    : require("../../assets/icon/continue.png")
+                }
+                style={styles.optionImage}
+              />
+              <Text
+                style={[
+                  styles.optionText,
+                  readingStyle === "continuous" && styles.selectedOptionText,
+                ]}
+              >
+                Continuous
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -136,14 +179,16 @@ const Header = ({
         {"<"} Back to Home
       </Text>
 
-      <CustomDropdown
-        isOpen={isDropdownOpen}
-        onToggle={() => setIsDropdownOpen(!isDropdownOpen)}
-        isHorizontal={isHorizontal}
-        readingStyle={readingStyle}
-        onViewChange={handleViewChange}
-        onReadingStyleChange={handleReadingStyleChange}
-      />
+      <View style={styles.dropdownWrapper}>
+        <CustomDropdown
+          isOpen={isDropdownOpen}
+          onToggle={() => setIsDropdownOpen(!isDropdownOpen)}
+          isHorizontal={isHorizontal}
+          readingStyle={readingStyle}
+          onViewChange={handleViewChange}
+          onReadingStyleChange={handleReadingStyleChange}
+        />
+      </View>
     </View>
   );
 };
@@ -348,6 +393,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   dropdownButton: {
+    width: 200,
     height: 50,
     borderWidth: 1,
     borderColor: "#ccc",
@@ -379,15 +425,16 @@ const styles = StyleSheet.create({
     borderBottomColor: "#eee",
   },
   selectedOption: {
-    backgroundColor: "#e3f2fd",
+    backgroundColor: "#9c60f5",
   },
   optionText: {
-    fontSize: 16,
     color: "#000",
+    fontSize: 16,
+    marginTop: 8,
+    textAlign: "center",
   },
   selectedOptionText: {
-    color: "#1976d2",
-    fontWeight: "bold",
+    color: "white",
   },
   pdf: {
     flex: 1,
@@ -404,6 +451,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   headerOverlay: {
     position: "absolute",
@@ -420,8 +470,8 @@ const styles = StyleSheet.create({
   dropdownMenu: {
     position: "absolute",
     top: "100%",
-    left: 0,
     right: 0,
+    minWidth: "100vw",
     backgroundColor: "white",
     borderRadius: 5,
     padding: 10,
@@ -446,16 +496,47 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginBottom: 5,
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  selectedOption: {
-    backgroundColor: "#9c60f5",
+  viewModeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
   },
-  optionText: {
-    color: "#000",
-    fontSize: 16,
+  halfWidth: {
+    width: "48%",
   },
-  selectedOptionText: {
-    color: "white",
+  optionImage: {
+    width: 32,
+    height: 32,
+  },
+  dropdownWrapper: {
+    position: "relative",
+    alignItems: "flex-end",
+  },
+  dropdownButton: {
+    backgroundColor: "transparent",
+    padding: 10,
+    borderRadius: 5,
+  },
+  dropdownButtonText: {
+    display: "none", // Hide the text since we're using an image
+  },
+  ImageContainer: {
+    width: 250,
+    height: 30,
+    paddingRight: 30,
+    objectFit: "contain",
+    alignItems: "flex-end",
+  },
+  dropdownButtonImage: {
+    width: 30,
+    height: 30,
+    objectFit: "contain",
+    tintColor: "white",
+    alignSelf: "flex-end",
   },
 });
 
