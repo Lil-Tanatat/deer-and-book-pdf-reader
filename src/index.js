@@ -17,6 +17,7 @@ import { usePreventScreenCapture } from "expo-screen-capture";
 import PdfReader from "./components/PdfReader";
 import { WebView } from "react-native-webview";
 import VideoPlayer from "./components/VideoPlayer";
+import NotFoundPage from "./components/NotFoundPage";
 import LinearGradient from "react-native-linear-gradient";
 
 const App = () => {
@@ -24,12 +25,14 @@ const App = () => {
   const [pdfUri, setPdfUri] = useState("");
   const [videoUri, setVideoUri] = useState("");
   const [slug, setSlug] = useState("");
+  const [isError, setIsError] = useState(false);
   const pdfUriRef = useRef("");
 
   const handleBackButtonPress = () => {
-    if (pdfUri || videoUri) {
+    if (pdfUri || videoUri || isError) {
       setPdfUri("");
       setVideoUri("");
+      setIsError(false);
     } else {
       BackHandler.exitApp();
     }
@@ -81,8 +84,15 @@ const App = () => {
           }
         } else if (video) {
           console.log("Setting Video URI:", video);
-          setVideoUri(video);
-          setPdfUri("");
+          if (video.includes("onedrive.live.com")) {
+            console.log("OneDrive video detected, showing NotFoundPage");
+            setIsError(true);
+            setPdfUri("");
+            setVideoUri("");
+          } else {
+            setVideoUri(video);
+            setPdfUri("");
+          }
         } else {
           console.warn("No valid content parameter found in URL.");
         }
@@ -111,8 +121,21 @@ const App = () => {
     };
   }, []);
 
+  if (isError) {
+    return <NotFoundPage onBack={() => setIsError(false)} />;
+  }
+
   if (pdfUri) {
-    return <PdfReader pdfUri={pdfUri} onBack={() => setPdfUri("")} />;
+    return (
+      <PdfReader
+        pdfUri={pdfUri}
+        onBack={() => setPdfUri("")}
+        onError={() => {
+          setPdfUri("");
+          setIsError(true);
+        }}
+      />
+    );
   }
 
   if (videoUri) {
@@ -164,6 +187,21 @@ const App = () => {
               <Text style={styles.buttonText}>Buy a Book</Text>
             </LinearGradient>
           </TouchableOpacity>
+
+          {/* <TouchableOpacity onPress={() => setIsError(true)}>
+            <LinearGradient
+              colors={["#B347FD", "#7B77F2"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.button}
+            >
+              <Image
+                source={require("../assets/image/404.png")}
+                style={styles.buttonIcon}
+              />
+              <Text style={styles.buttonText}>Test 404</Text>
+            </LinearGradient>
+          </TouchableOpacity> */}
         </View>
       </View>
 
@@ -217,13 +255,15 @@ const styles = StyleSheet.create({
   buttonRow: {
     width: "100%",
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     alignItems: "center",
+    flexWrap: "wrap",
+    gap: 20,
   },
   button: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     justifyContent: "center",
     alignItems: "center",
     padding: 0,
